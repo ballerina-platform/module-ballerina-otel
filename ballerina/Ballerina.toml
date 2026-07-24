@@ -25,10 +25,10 @@ distribution = "2201.13.4"
 graalvmCompatible = true
 
 [[platform.java21.dependency]]
-path = "../native/build/libs/otel-extension-native-0.9.0-SNAPSHOT.jar"
+path = "../native/build/libs/otel-extension-native-0.9.0.jar"
 groupId = "ballerina"
 artifactId = "otel-extension-native"
-version = "0.9.0-SNAPSHOT"
+version = "0.9.0"
 
 [[platform.java21.dependency]]
 path = "./lib/opentelemetry-sdk-trace-1.32.0.jar"
