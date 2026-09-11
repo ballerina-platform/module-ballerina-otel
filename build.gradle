@@ -142,8 +142,16 @@ release {
     }
 }
 
-tasks.named('build') {
-    dependsOn('otel-extension-ballerina:build')
+if (tasks.names.contains('build')) {
+    tasks.named('build') {
+        dependsOn('otel-extension-ballerina:build')
+
+    }
+} else {
+    tasks.register('build') {
+        dependsOn('otel-extension-ballerina:build')
+
+    }
 }
 
 task codeCoverageReport(type: JacocoReport) {
