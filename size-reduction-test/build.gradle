@@ -101,9 +101,9 @@ dependencies {
 // Raw ProGuard output (shrunk classes + kotlin_module resources, with the
 // original -- now stale -- multi-release manifest). finalizeSlimKotlinStdlib
 // repackages this into the jar that actually ships (kotlinSlimJar).
-def kotlinSlimRawJar = file("${buildDir}/tmp/proguard/kotlin-stdlib-${kotlinStdlibVersion}-slim-raw.jar")
-def kotlinSlimJar = file("${buildDir}/libs/kotlin-stdlib-${kotlinStdlibVersion}-slim.jar")
-def shrinkDiscardJar = file("${buildDir}/tmp/proguard/shrink-roots-discard.jar")
+def kotlinSlimRawJar = layout.buildDirectory.file("tmp/proguard/kotlin-stdlib-${kotlinStdlibVersion}-slim-raw.jar").get().asFile
+def kotlinSlimJar = layout.buildDirectory.file("libs/kotlin-stdlib-${kotlinStdlibVersion}-slim.jar").get().asFile
+def shrinkDiscardJar = layout.buildDirectory.file("tmp/proguard/shrink-roots-discard.jar").get().asFile
 // Apache 2.0 attribution files embedded into the redistributed (modified)
 // kotlin-stdlib jar so the license/notice travel with the artifact inside the
 // published Ballerina package. The Apache 2.0 text is shared with the repo root.
@@ -136,7 +136,7 @@ tasks.register('shrinkKotlinStdlib', proguard.gradle.ProGuardTask) {
 
     configuration file('proguard/kotlin-stdlib-slim.pro')
 
-    printusage file("${buildDir}/proguard/removed-from-kotlin-stdlib.txt")
+    printusage layout.buildDirectory.file("proguard/removed-from-kotlin-stdlib.txt").get().asFile
 }
 
 // Repackage the raw ProGuard output into the jar that actually ships:
