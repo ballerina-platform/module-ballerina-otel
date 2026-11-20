@@ -45,6 +45,17 @@ public final class OtelExporter implements SpanExporter {
         }
     }
 
+    /**
+     * Writes an informational message to the trace log, honouring the configured trace log level.
+     *
+     * @param message message to log
+     */
+    public void logInfo(String message) {
+        if (tracerLogger.isLoggable(Level.INFO)) {
+            tracerLogger.printInfo(message);
+        }
+    }
+
     @Override
     public CompletableResultCode export(Collection<SpanData> spans) {
         if (tracerLogger.isLoggable(Level.INFO)) {

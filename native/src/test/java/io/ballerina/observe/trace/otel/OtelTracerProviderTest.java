@@ -36,18 +36,23 @@ import io.opentelemetry.sdk.trace.samplers.Sampler;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -151,6 +156,51 @@ public class OtelTracerProviderTest {
             }
             assertEquals(serviceNamesBySpan.get("orders-span"), "orders");
             assertEquals(serviceNamesBySpan.get("payments-span"), "payments");
+        } finally {
+            invokeShutdownCurrentProvider();
+        }
+    }
+
+    @Test
+    public void testStartupMessageIsTraceLoggedForGrpc() throws IOException, NoSuchFieldException,
+            IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        String log = initializeAndReadTraceLog("grpc", "http://localhost:4317");
+        assertTrue(log.contains("INFO {ballerina/otel} - Started publishing traces to Otel on "
+                + "http://localhost:4317 [gRPC]"), log);
+    }
+
+    @Test
+    public void testStartupMessageIsTraceLoggedForHttp() throws IOException, NoSuchFieldException,
+            IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        String log = initializeAndReadTraceLog("http/protobuf", "https://localhost:4318/v1/traces");
+        assertTrue(log.contains("INFO {ballerina/otel} - Started publishing traces to Otel on "
+                + "https://localhost:4318/v1/traces [HTTPS]"), log);
+    }
+
+    @Test
+    public void testNoTraceLoggerWhenTraceLoggingDisabled() throws NoSuchFieldException,
+            IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        try {
+            OtelTracerProvider.initializeConfigurations(bString("http://localhost:4317"), bString("always_on"),
+                    ValueCreator.createDecimalValue("1"), 1000, 512, false, bString(""), bString("info"),
+                    map(), bString("grpc"), map());
+            assertFalse(getStaticField("spanExporter") instanceof OtelExporter);
+        } finally {
+            invokeShutdownCurrentProvider();
+        }
+    }
+
+    private static String initializeAndReadTraceLog(String protocol, String endpoint)
+            throws IOException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException,
+            InvocationTargetException {
+        Path logDir = Files.createTempDirectory("otel-trace-log");
+        Path logFile = logDir.resolve("trace.log");
+        try {
+            OtelTracerProvider.initializeConfigurations(bString(endpoint), bString("always_on"),
+                    ValueCreator.createDecimalValue("1"), 1000, 512, false, bString(logFile.toString()),
+                    bString("info"), map(), bString(protocol), map());
+            assertTrue(getStaticField("spanExporter") instanceof OtelExporter);
+            return Files.readString(logFile);
         } finally {
             invokeShutdownCurrentProvider();
         }

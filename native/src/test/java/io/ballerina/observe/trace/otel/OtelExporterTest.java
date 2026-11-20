@@ -24,6 +24,9 @@ import org.mockito.ArgumentCaptor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -168,6 +171,19 @@ public class OtelExporterTest {
 
         // Verify
         verify(mockExporter, times(2)).export(any());
+    }
+
+    @Test
+    public void testLogInfoRespectsTraceLogLevel() throws IOException {
+        Path logDir = Files.createTempDirectory("otel-exporter-log");
+        Path infoLog = logDir.resolve("info.log");
+        Path errorLog = logDir.resolve("error.log");
+
+        new OtelExporter(mockExporter, TEST_ENDPOINT, false, infoLog.toString(), "info").logInfo("startup");
+        new OtelExporter(mockExporter, TEST_ENDPOINT, false, errorLog.toString(), "error").logInfo("startup");
+
+        assertTrue(Files.readString(infoLog).contains("INFO {ballerina/otel} - startup"));
+        assertFalse(Files.readString(errorLog).contains("startup"));
     }
 
     private List<SpanData> createMockSpans(int count) {

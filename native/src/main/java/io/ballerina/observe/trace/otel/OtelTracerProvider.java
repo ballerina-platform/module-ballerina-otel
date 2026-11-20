@@ -36,7 +36,6 @@ import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +52,6 @@ public class OtelTracerProvider implements TracerProvider {
     // conventions. Inlined (mirroring the OTel SDK's own Resource class) instead of
     // packing the semconv jar for this single constant.
     private static final AttributeKey<String> SERVICE_NAME = AttributeKey.stringKey("service.name");
-    private static final PrintStream console = System.out;
 
     // Protocol constants. "http/json" is validated and rejected on the Ballerina side, so only
     // "grpc" (OTLP/gRPC) and "http/protobuf" (OTLP/HTTP + protobuf) reach this layer.
@@ -173,8 +171,12 @@ public class OtelTracerProvider implements TracerProvider {
             ? " (with " + exporterHeaders.size() + " custom header(s))"
             : "";
 
-        console.println("ballerina: started publishing traces to Otel on " + reporterEndpoint +
-                       " [" + transportProtocol + tls + "]" + authInfo);
+        // Emitted through the trace logger (same format/destination as the export logs) rather
+        // than stdout, so it only appears when trace logging is enabled.
+        if (spanExporter instanceof OtelExporter otelExporter) {
+            otelExporter.logInfo("Started publishing traces to Otel on " + reporterEndpoint +
+                    " [" + transportProtocol + tls + "]" + authInfo);
+        }
     }
 
     private static Sampler selectSampler(BString samplerType, BDecimal samplerArg) {
