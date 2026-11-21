@@ -16,4 +16,4 @@ observabilityIncluded = true
 org = "ballerina"
 name = "otel"
 repository = "local"
-version = "1.0.0"
+version = "1.0.1"
